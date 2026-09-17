@@ -54,7 +54,7 @@ if [[ ! -f $context_file ]]; then
 fi
 
 if ! command -v neon >/dev/null 2>&1; then
-  echo "Error: Neon CLI is not installed. Install it with 'npm install --global neon'." >&2
+  echo "Error: Neon CLI is not installed. Install it with 'pnpm add --global neon'." >&2
   exit 1
 fi
 
