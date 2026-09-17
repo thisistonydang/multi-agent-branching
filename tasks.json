@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "project": "Agent Task Board",
+  "purpose": "Database-backed features that parallel agents build and test on isolated Git and Neon branches.",
+  "workflow": {
+    "baseRef": "main",
+    "createWorktreeCommand": "pnpm feature:new {featureName} {baseRef}",
+    "runInParallel": true,
+    "setupCommands": [
+      "pnpm install --frozen-lockfile",
+      "pnpm db:migrate"
+    ],
+    "instructions": [
+      "Create one worktree and matching Neon branch for each task.",
+      "Confirm that the worktree has its own .neon and .env.local files before changing the database.",
+      "Start one agent in each worktree and give it only its assigned task object.",
+      "Change the Drizzle schema and generate a migration for every database change.",
+      "Apply migrations only from the assigned feature worktree. Never apply a feature migration from the main worktree.",
+      "Create test data with the task's unique isolationMarker on the feature's Neon branch.",
+      "After all agents finish, query each Neon branch and confirm that its isolationMarker is absent from main and the other feature branches.",
+      "Run every verification command before committing.",
+      "Commit each task on its own feature branch.",
+      "Schema and Drizzle migration metadata can conflict during integration. Merge features one at a time, resolve the final schema, and generate a clean integration migration on a separate Neon branch before updating main."
+    ]
+  },
+  "tasks": [
+    {
+      "id": "task-priority",
+      "featureName": "task-priority",
+      "title": "Add task priorities",
+      "objective": "Let users assign a low, medium, or high priority to each task and test the schema change on an isolated Neon branch.",
+      "route": "/priorities",
+      "isolationMarker": "isolation:task-priority",
+      "allowedPaths": [
+        "lib/schema.ts",
+        "drizzle/**",
+        "app/priorities/**"
+      ],
+      "databaseChanges": [
+        "Add a non-null priority column to tasks.",
+        "Use low, medium, and high as the only valid values.",
+        "Use medium as the default so existing rows remain valid.",
+        "Add a database check constraint for the allowed values."
+      ],
+      "requirements": [
+        "Create a Drizzle migration and apply it to this feature's Neon branch.",
+        "Create app/priorities/page.tsx to list tasks ordered by priority.",
+        "Add a server action under app/priorities that changes a task's priority.",
+        "Create a high-priority task whose title is exactly isolation:task-priority.",
+        "Verify through Drizzle that the new priority value is stored.",
+        "Do not change the root task board page."
+      ],
+      "verification": [
+        "pnpm db:generate",
+        "pnpm db:migrate",
+        "pnpm typecheck",
+        "pnpm build"
+      ]
+    },
+    {
+      "id": "task-comments",
+      "featureName": "task-comments",
+      "title": "Add task comments",
+      "objective": "Let agents leave comments on tasks using a new table that exists only on this feature's Neon branch during development.",
+      "route": "/comments",
+      "isolationMarker": "isolation:task-comments",
+      "allowedPaths": [
+        "lib/schema.ts",
+        "drizzle/**",
+        "app/comments/**"
+      ],
+      "databaseChanges": [
+        "Add a task_comments table with id, task_id, author_name, body, and created_at columns.",
+        "Add a foreign key from task_comments.task_id to tasks.id.",
+        "Delete comments automatically when their task is deleted.",
+        "Require a non-empty comment body with a maximum length of 1000 characters."
+      ],
+      "requirements": [
+        "Create a Drizzle migration and apply it to this feature's Neon branch.",
+        "Create app/comments/page.tsx to select a task, view its comments, and add a comment.",
+        "Use Drizzle for all reads and writes.",
+        "Add a comment whose body is exactly isolation:task-comments.",
+        "Verify that the comment can be read back with its task title.",
+        "Do not change the root task board page."
+      ],
+      "verification": [
+        "pnpm db:generate",
+        "pnpm db:migrate",
+        "pnpm typecheck",
+        "pnpm build"
+      ]
+    },
+    {
+      "id": "task-labels",
+      "featureName": "task-labels",
+      "title": "Add task labels",
+      "objective": "Let users organize tasks with reusable labels while the new relational schema is isolated from other feature work.",
+      "route": "/labels",
+      "isolationMarker": "isolation:task-labels",
+      "allowedPaths": [
+        "lib/schema.ts",
+        "drizzle/**",
+        "app/labels/**"
+      ],
+      "databaseChanges": [
+        "Add a labels table with id, name, color, and created_at columns.",
+        "Make label names unique.",
+        "Add a task_labels join table with task_id and label_id foreign keys.",
+        "Use a composite primary key to prevent duplicate labels on a task.",
+        "Delete join rows automatically when a task or label is deleted."
+      ],
+      "requirements": [
+        "Create a Drizzle migration and apply it to this feature's Neon branch.",
+        "Create app/labels/page.tsx to create labels and assign them to tasks.",
+        "Use Drizzle for all reads and writes.",
+        "Create a label whose name is exactly isolation:task-labels and assign it to a task.",
+        "Verify that a Drizzle join query returns the task and its label.",
+        "Do not change the root task board page."
+      ],
+      "verification": [
+        "pnpm db:generate",
+        "pnpm db:migrate",
+        "pnpm typecheck",
+        "pnpm build"
+      ]
+    },
+    {
+      "id": "task-subtasks",
+      "featureName": "task-subtasks",
+      "title": "Add subtasks",
+      "objective": "Let users break a task into smaller checklist items using a new table on an isolated Neon branch.",
+      "route": "/subtasks",
+      "isolationMarker": "isolation:task-subtasks",
+      "allowedPaths": [
+        "lib/schema.ts",
+        "drizzle/**",
+        "app/subtasks/**"
+      ],
+      "databaseChanges": [
+        "Add a subtasks table with id, task_id, title, completed, position, created_at, and updated_at columns.",
+        "Add a foreign key from subtasks.task_id to tasks.id.",
+        "Delete subtasks automatically when their task is deleted.",
+        "Default completed to false and position to zero.",
+        "Require a non-empty title with a maximum length of 120 characters."
+      ],
+      "requirements": [
+        "Create a Drizzle migration and apply it to this feature's Neon branch.",
+        "Create app/subtasks/page.tsx to add, complete, and delete subtasks for a selected task.",
+        "Order subtasks by position and creation time.",
+        "Use Drizzle for all reads and writes.",
+        "Create and complete a subtask whose title is exactly isolation:task-subtasks.",
+        "Verify through Drizzle that its completed value changed to true.",
+        "Do not change the root task board page."
+      ],
+      "verification": [
+        "pnpm db:generate",
+        "pnpm db:migrate",
+        "pnpm typecheck",
+        "pnpm build"
+      ]
+    }
+  ]
+}
