@@ -113,6 +113,10 @@ echo "Creating Git branch '$git_branch' and worktree '$worktree_path'..."
 git -C "$repo_root" worktree add -b "$git_branch" "$worktree_path" "$base_ref"
 created_worktree=true
 
+# Give the worktree its own Neon context. Without this file, Neon walks up to
+# the main checkout and changes its branch context instead.
+cp "$context_file" "$worktree_path/.neon"
+
 echo "Creating and checking out Neon branch '$neon_branch'..."
 (
   cd "$worktree_path"
