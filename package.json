@@ -9,6 +9,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "fleet:prepare": "node scripts/prepare-task-worktrees.mjs",
+    "fleet:clean": "node scripts/cleanup-task-fleet.mjs",
     "feature:new": "./scripts/new-feature-worktree.sh"
   },
   "dependencies": {

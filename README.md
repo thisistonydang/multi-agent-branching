@@ -74,3 +74,12 @@ The repository must be clean before launching the fleet. Preview what will be cr
 ```bash
 pnpm fleet:prepare --dry-run
 ```
+
+Clean up the task fleet after reviewing or merging any work you want to keep:
+
+```bash
+pnpm fleet:clean --dry-run
+pnpm fleet:clean --yes
+```
+
+Cleanup removes task-fleet worktrees, their local Git branches, and the matching Neon branches. It refuses to remove a dirty worktree unless you explicitly pass `--yes --force`.
