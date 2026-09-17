@@ -58,3 +58,19 @@ pnpm feature:new <feature-name> [base-ref]
 ```
 
 This creates a matching Git branch, worktree, and Neon branch. The worktree receives its own Neon environment variables.
+
+## Run all tasks with pi-subagents
+
+Install [`pi-subagents`](https://github.com/nicobailon/pi-subagents), start Pi in this repository, and run:
+
+```text
+/task-fleet
+```
+
+The project prompt prepares one Git worktree and Neon branch per task in `tasks.json`, then launches one parallel worker in each worktree. Open `/subagents-fleet` to watch the workers.
+
+The repository must be clean before launching the fleet. Preview what will be created without changing anything:
+
+```bash
+pnpm fleet:prepare --dry-run
+```

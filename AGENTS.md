@@ -16,6 +16,10 @@ pnpm feature:new add-login main
 
 The script normalizes the feature name. It uses `feature/<normalized-feature-name>` for the Git and Neon branches, and `.worktrees/<normalized-feature-name>` for the worktree.
 
+## Parallel task fleet
+
+Use `/task-fleet` to launch one pi-subagents worker per task in `tasks.json`. The repository must be clean before launch. Each worker must use its prepared worktree and Neon branch. Never run a feature migration from the main worktree.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
