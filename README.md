@@ -1,85 +1,114 @@
-# Agent Task Board
+# Parallel agents with Git worktrees and Neon branches
 
-A minimal task board for demonstrating parallel development with Git worktrees and Neon branches.
+This demo launches one Pi subagent for every task in `tasks.json`. Each agent receives its own Git worktree, Git branch, and Neon database branch. Pi shows the agents in a visual fleet view while they work in parallel.
 
-## What it does
+## Prerequisites
 
-- Creates tasks
-- Assigns an optional agent name
-- Updates task status
-- Deletes tasks
-- Stores all tasks in Lakebase Postgres on Neon
+Install and configure:
 
-## Setup
+- [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/) 20.19 or newer
+- [pnpm](https://pnpm.io/) 10 or newer
+- [Neon CLI](https://neon.com/docs/cli/install) 4.15 or newer, with a Neon account
+- [Pi](https://pi.dev/), with a model provider configured
+- [pi-subagents](https://github.com/nicobailon/pi-subagents)
 
-Install dependencies:
+## Run the demo
+
+### 1. Clone the repository
 
 ```bash
-pnpm install
+git clone <repository-url>
+cd multi-agent-branching
 ```
 
-Link the repository to a Neon project and pull its environment variables:
+### 2. Install dependencies
 
 ```bash
+pnpm install --frozen-lockfile
+```
+
+### 3. Connect a Neon project
+
+Sign in if needed, link a project, select or create its `main` branch, and apply the base migration:
+
+```bash
+neon login
 neon link
-neon env pull
-```
-
-Generate a Drizzle migration after changing `lib/schema.ts`:
-
-```bash
-pnpm db:generate
-```
-
-Apply pending migrations with the direct database connection:
-
-```bash
+neon checkout main --create
 pnpm db:migrate
 ```
 
-Open Drizzle Studio when you want to inspect the data:
+The Neon commands create ignored `.neon` and `.env.local` files. Do not commit them.
+
+### 4. Install pi-subagents
 
 ```bash
-pnpm db:studio
+pi install npm:pi-subagents
 ```
 
-Start the app:
+### 5. Start Pi
 
 ```bash
-pnpm dev
+pi
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Accept the project trust prompt so Pi can load the repository command under `.pi/prompts/`. Use `/login` first if Pi still needs model authentication.
 
-## Create an isolated feature environment
+Check the subagent installation:
 
-```bash
-pnpm feature:new <feature-name> [base-ref]
+```text
+/subagents-doctor
 ```
 
-This creates a matching Git branch, worktree, and Neon branch. The worktree receives its own Neon environment variables.
-
-## Run all tasks with pi-subagents
-
-Install [`pi-subagents`](https://github.com/nicobailon/pi-subagents), start Pi in this repository, and run:
+### 6. Launch the task fleet
 
 ```text
 /task-fleet
 ```
 
-The project prompt prepares one Git worktree and Neon branch per task in `tasks.json`, then launches one parallel worker in each worktree. Open `/subagents-fleet` to watch the workers.
+The command reads `tasks.json`, creates the matching Git and Neon branches, and starts one worker per task. The main repository must be clean before launch.
 
-The repository must be clean before launching the fleet. Preview what will be created without changing anything:
+### 7. Watch the agents
 
-```bash
-pnpm fleet:prepare --dry-run
+```text
+/subagents-fleet
 ```
 
-Clean up the task fleet after reviewing or merging any work you want to keep:
+The fleet view shows each agent's status, current activity, transcript, and controls. Pi also reports each completed branch and commit in the main conversation.
+
+## Inspect the results
+
+After every agent finishes:
+
+```bash
+git worktree list
+neon branches list
+```
+
+Open a feature worktree and run its version of the app, for example:
+
+```bash
+cd .worktrees/task-priority
+pnpm dev
+```
+
+Do not merge the branches without reviewing them. The demo tasks intentionally make overlapping Drizzle schema changes, so integration requires resolving the final schema and migrations.
+
+## Clean up
+
+Cleanup permanently deletes the task worktrees, their local Git branches, and their matching Neon branches. Review or merge any work you want to keep first.
+
+Preview the cleanup:
 
 ```bash
 pnpm fleet:clean --dry-run
+```
+
+Run it:
+
+```bash
 pnpm fleet:clean --yes
 ```
 
-Cleanup removes task-fleet worktrees, their local Git branches, and the matching Neon branches. It refuses to remove a dirty worktree unless you explicitly pass `--yes --force`.
+The cleanup refuses to delete a worktree with uncommitted changes. To intentionally discard those changes, use `pnpm fleet:clean --yes --force`.
