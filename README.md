@@ -28,18 +28,25 @@ cd multi-agent-branching
 pnpm install --frozen-lockfile
 ```
 
-### 3. Connect a Neon project
+### 3. Create and link a Neon project
 
-Sign in if needed, link a project, select or create its `main` branch, and apply the base migration:
+Create a project in the [Neon Console](https://console.neon.tech/), or let the interactive `neon link` command create one. Then sign in and link this repository:
 
 ```bash
 neon login
 neon link
+```
+
+During `neon link`, select your Neon organization and project. The command creates an ignored `.neon` context file and pulls the database connection variables into an ignored `.env.local` file.
+
+Select or create the database branch used by the main checkout, then apply the base migration:
+
+```bash
 neon checkout main --create
 pnpm db:migrate
 ```
 
-The Neon commands create ignored `.neon` and `.env.local` files. Do not commit them.
+Do not commit `.neon` or `.env.local`.
 
 ### 4. Install pi-subagents
 
